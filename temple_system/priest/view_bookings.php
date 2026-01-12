@@ -6,7 +6,7 @@ if (!isset($_SESSION['priest_id'])) {
     header("Location: priest_login.php");
     exit;
 }
-
+ 
 $bookings = [];
 
 $sql = "SELECT b.booking_date, b.booking_time, b.status, d.full_name, p.pooja_name
@@ -91,4 +91,5 @@ if ($stmt = $conn->prepare($sql)) {
     </div>
 </div>
 </body>
+
 </html>
