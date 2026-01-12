@@ -21,7 +21,7 @@ if (isset($_SESSION['admin_id']))
 }
 
 // Initialize variables
-$error = '';
+$error = ''; 
 $success = '';
 
 // Check for messages
@@ -45,7 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST')
     if (empty($email) || empty($password)) 
     {
         $error = 'Please enter both email and password.';
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) 
+    } 
+    elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) 
     {
         $error = 'Please enter a valid email address.';
     } 
@@ -355,4 +356,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST')
         console.log('ॐ Admin Login System Loaded');
     </script>
 </body>
+
 </html>
