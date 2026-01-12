@@ -2,7 +2,6 @@
 /**
  * ============================================================
  * Sri Balathandayuthapani Temple System
- * Admin Dashboard - FIXED FOR YOUR DATABASE
  * 
  * Created by: Avenesh A/L Kumaran (1221106783)
  * Last Modified: January 2025
@@ -22,14 +21,16 @@ header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
 session_start();
 
 // Check if admin is logged in
-if (!isset($_SESSION['admin_id'])) {
+if (!isset($_SESSION['admin_id'])) 
+{
     header("Location: admin_login.php");
     exit();
 }
 
 // Check session timeout (30 minutes = 1800 seconds)
 $timeout_duration = 1800;
-if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > $timeout_duration) {
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > $timeout_duration) 
+{
     session_unset();
     session_destroy();
     header("Location: admin_login.php?timeout=1");
@@ -43,7 +44,8 @@ $_SESSION['last_activity'] = time();
 require_once('../includes/db_connect.php');
 
 // Check database connection
-if (!$conn) {
+if (!$conn) 
+{
     die("Database connection failed: " . mysqli_connect_error());
 }
 
@@ -539,4 +541,5 @@ try {
 if ($conn) {
     $conn->close();
 }
+
 ?>
