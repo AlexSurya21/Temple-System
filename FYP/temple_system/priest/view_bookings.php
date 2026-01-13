@@ -5,7 +5,7 @@ if (!isset($_SESSION['priest_id'])) {
     header("Location: priest_login.php");
     exit;
 }
- 
+  
 $bookings = [];
 
 // Updated to match your actual database structure
@@ -112,4 +112,5 @@ if ($stmt = $conn->prepare($sql)) {
     </div>
 </div>
 </body>
+
 </html>
