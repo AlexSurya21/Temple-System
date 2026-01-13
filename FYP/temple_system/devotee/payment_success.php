@@ -8,7 +8,7 @@ if (!isset($_SESSION['payment_success']) || $_SESSION['payment_success'] !== tru
 }
 
 // Get payment details from session
-$payment_id = $_SESSION['payment_id'] ?? '';
+$payment_id = $_SESSION['payment_id'] ?? ''; 
 $transaction_id = $_SESSION['transaction_id'] ?? '';
 $receipt_number = $_SESSION['receipt_number'] ?? '';
 $amount = $_SESSION['amount'] ?? 0;
@@ -329,4 +329,5 @@ unset($_SESSION['payment_date']);
         </div>
     </div>
 </body>
+
 </html>
