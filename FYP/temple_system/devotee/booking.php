@@ -1,5 +1,5 @@
 <?php
-session_start();
+session_start();  
 require_once "../includes/db_connect.php";
 
 if (!isset($_SESSION['user_id'])) {
@@ -100,3 +100,4 @@ $userName = $_SESSION['user_name'] ?? "Devotee";
   </div>
 </body>
 </html>
+
