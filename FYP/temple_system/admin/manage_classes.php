@@ -58,7 +58,6 @@ if (isset($_GET['delete']) && isset($_GET['id'])) {
 if (isset($_POST['add_class'])) {
     $class_name = trim($_POST['class_name']);
     $class_description = trim($_POST['class_description']);
-    $instructor_name = trim($_POST['instructor_name']);
     $schedule_day = $_POST['schedule_day'];
     $schedule_time = $_POST['schedule_time'];
     $duration_minutes = (int)$_POST['duration_minutes'];
@@ -66,15 +65,26 @@ if (isset($_POST['add_class'])) {
     $class_fee = (float)$_POST['class_fee'];
     $current_students = 0;
     
-    $stmt = $conn->prepare("INSERT INTO cultural_class (class_name, class_description, instructor_name, schedule_day, schedule_time, duration_minutes, max_students, current_students, class_fee) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssssiiid", $class_name, $class_description, $instructor_name, $schedule_day, $schedule_time, $duration_minutes, $max_students, $current_students, $class_fee);
+    // Check if class name already exists
+    $check_stmt = $conn->prepare("SELECT class_id FROM cultural_class WHERE class_name = ?");
+    $check_stmt->bind_param("s", $class_name);
+    $check_stmt->execute();
+    $check_result = $check_stmt->get_result();
     
-    if ($stmt->execute()) {
-        $success_message = "Class added successfully!";
+    if ($check_result->num_rows > 0) {
+        $error_message = "This class name already exists in the list. Please use a different name.";
     } else {
-        $error_message = "Failed to add class.";
+        $stmt = $conn->prepare("INSERT INTO cultural_class (class_name, class_description, schedule_day, schedule_time, duration_minutes, max_students, current_students, class_fee) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssiiid", $class_name, $class_description, $schedule_day, $schedule_time, $duration_minutes, $max_students, $current_students, $class_fee);
+        
+        if ($stmt->execute()) {
+            $success_message = "Class added successfully!";
+        } else {
+            $error_message = "Failed to add class.";
+        }
+        $stmt->close();
     }
-    $stmt->close();
+    $check_stmt->close();
 }
 
 // Handle Update Class
@@ -82,15 +92,14 @@ if (isset($_POST['update_class'])) {
     $class_id = (int)$_POST['class_id'];
     $class_name = trim($_POST['class_name']);
     $class_description = trim($_POST['class_description']);
-    $instructor_name = trim($_POST['instructor_name']);
     $schedule_day = $_POST['schedule_day'];
     $schedule_time = $_POST['schedule_time'];
     $duration_minutes = (int)$_POST['duration_minutes'];
     $max_students = (int)$_POST['max_students'];
     $class_fee = (float)$_POST['class_fee'];
     
-    $stmt = $conn->prepare("UPDATE cultural_class SET class_name = ?, class_description = ?, instructor_name = ?, schedule_day = ?, schedule_time = ?, duration_minutes = ?, max_students = ?, class_fee = ? WHERE class_id = ?");
-    $stmt->bind_param("sssssiidi", $class_name, $class_description, $instructor_name, $schedule_day, $schedule_time, $duration_minutes, $max_students, $class_fee, $class_id);
+    $stmt = $conn->prepare("UPDATE cultural_class SET class_name = ?, class_description = ?, schedule_day = ?, schedule_time = ?, duration_minutes = ?, max_students = ?, class_fee = ? WHERE class_id = ?");
+    $stmt->bind_param("ssssiidi", $class_name, $class_description, $schedule_day, $schedule_time, $duration_minutes, $max_students, $class_fee, $class_id);
     
     if ($stmt->execute()) {
         $success_message = "Class updated successfully!";
@@ -113,7 +122,7 @@ if ($filter_day != 'all') {
 
 if (!empty($search)) {
     $search_term = $conn->real_escape_string($search);
-    $query .= " AND (class_name LIKE '%$search_term%' OR instructor_name LIKE '%$search_term%')";
+    $query .= " AND class_name LIKE '%$search_term%'";
 }
 
 $query .= " ORDER BY FIELD(schedule_day, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), schedule_time";
@@ -372,7 +381,7 @@ $availability_percent = $stats['total_capacity'] > 0 ? round(($stats['total_stud
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 1200px;
+            min-width: 1000px;
         }
 
         table th {
@@ -588,7 +597,7 @@ $availability_percent = $stats['total_capacity'] > 0 ? round(($stats['total_stud
 
                     <div class="filter-group">
                         <label>Search Class</label>
-                        <input type="text" name="search" placeholder="Search by name or instructor" value="<?php echo htmlspecialchars($search); ?>">
+                        <input type="text" name="search" placeholder="Search by class name" value="<?php echo htmlspecialchars($search); ?>">
                     </div>
                 </div>
 
@@ -609,7 +618,6 @@ $availability_percent = $stats['total_capacity'] > 0 ? round(($stats['total_stud
                         <tr>
                             <th>ID</th>
                             <th>Class Name</th>
-                            <th>Instructor</th>
                             <th>Schedule</th>
                             <th>Duration</th>
                             <th>Students</th>
@@ -628,7 +636,6 @@ $availability_percent = $stats['total_capacity'] > 0 ? round(($stats['total_stud
                                     <strong><?php echo htmlspecialchars($class['class_name']); ?></strong><br>
                                     <small style="color: #999;"><?php echo htmlspecialchars(substr($class['class_description'] ?? '', 0, 50)); ?>...</small>
                                 </td>
-                                <td><?php echo htmlspecialchars($class['instructor_name']); ?></td>
                                 <td>
                                     <span class="day-badge"><?php echo $class['schedule_day']; ?></span><br>
                                     <small><?php echo date('h:i A', strtotime($class['schedule_time'])); ?></small>
@@ -673,11 +680,6 @@ $availability_percent = $stats['total_capacity'] > 0 ? round(($stats['total_stud
                 <div class="form-group">
                     <label>Class Description *</label>
                     <textarea name="class_description" required></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Instructor Name *</label>
-                    <input type="text" name="instructor_name" required>
                 </div>
 
                 <div class="form-group">
@@ -742,11 +744,6 @@ $availability_percent = $stats['total_capacity'] > 0 ? round(($stats['total_stud
                 </div>
 
                 <div class="form-group">
-                    <label>Instructor Name *</label>
-                    <input type="text" name="instructor_name" id="edit_instructor_name" required>
-                </div>
-
-                <div class="form-group">
                     <label>Schedule Day *</label>
                     <select name="schedule_day" id="edit_schedule_day" required>
                         <option value="">Select Day</option>
@@ -804,7 +801,6 @@ $availability_percent = $stats['total_capacity'] > 0 ? round(($stats['total_stud
             document.getElementById('edit_class_id').value = classData.class_id;
             document.getElementById('edit_class_name').value = classData.class_name;
             document.getElementById('edit_class_description').value = classData.class_description;
-            document.getElementById('edit_instructor_name').value = classData.instructor_name;
             document.getElementById('edit_schedule_day').value = classData.schedule_day;
             document.getElementById('edit_schedule_time').value = classData.schedule_time;
             document.getElementById('edit_duration_minutes').value = classData.duration_minutes;
