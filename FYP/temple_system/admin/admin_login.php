@@ -226,4 +226,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 passwordInput.type = 'text';
                 toggleIcon.textContent = '🙈';
             } else {
+
                 passwordInput.type
