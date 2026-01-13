@@ -8,7 +8,7 @@ if (isset($_SESSION['admin_id']))
     exit();
 } 
 elseif (isset($_SESSION['user_id'])) 
-{
+{ 
     header("Location: user/user_dashboard.php");
     exit();
 }
@@ -742,4 +742,5 @@ elseif (isset($_SESSION['devotee_id']))
         }
     </script>
 </body>
+
 </html>
