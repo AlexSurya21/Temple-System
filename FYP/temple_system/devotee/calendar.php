@@ -2,7 +2,7 @@
 session_start();
 if (!isset($_SESSION['user_id'])) {
   header("Location: devotee_login.php");
-  exit;
+  exit;   
 }
 ?>
 <!DOCTYPE html>
@@ -129,3 +129,4 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+
