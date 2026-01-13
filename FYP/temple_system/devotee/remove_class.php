@@ -11,7 +11,7 @@ $user_id  = (int)$_SESSION['user_id'];
 $class_id = isset($_GET['class_id']) ? (int)$_GET['class_id'] : 0;
 
 if ($class_id <= 0) {
-    die("Invalid class id");
+    die("Invalid class id");  
 }
 
 // 1) Check current status of this registration
@@ -93,4 +93,5 @@ if ($status === 'active') {
 // fallback
 header("Location: my_classes.php?info=unknown_status");
 exit;
+
 
