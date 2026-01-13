@@ -3,8 +3,8 @@
 session_start();
 require_once "../includes/db_connect.php";
 
-// ✅ must login
-if (!isset($_SESSION['user_id'])) {
+// ✅ must login  
+if (!isset($_SESSION['user_id'])) {  
     header("Location: devotee_login.php");
     exit;
 }
@@ -69,3 +69,4 @@ if ($stmt->execute()) {
 } else {
     die("Insert failed: " . $stmt->error);
 }
+
