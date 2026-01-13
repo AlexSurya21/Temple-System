@@ -228,7 +228,7 @@ foreach ($rows as $r) {
       <details>
         <summary>
           History (Cancelled/Other) — <?php echo count($history); ?> item(s)
-          <div class="hint">Click to expand/collapse</div>
+          <div class="hint">Click to expand/collapse</div> 
         </summary>
 
         <?php if (count($history) === 0): ?>
@@ -265,3 +265,4 @@ foreach ($rows as $r) {
   </div>
 </body>
 </html>
+
