@@ -4,7 +4,7 @@ session_start();
 require_once "../includes/db_connect.php";
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: devotee_login.php");
+    header("Location: devotee_login.php");  
     exit;
 }
 
@@ -119,3 +119,4 @@ $bookingTypes = [
   </div>
 </body>
 </html>
+
