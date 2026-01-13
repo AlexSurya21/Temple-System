@@ -66,7 +66,7 @@ foreach ($rows as $r) {
 
   // move to first occurrence of target weekday inside the range
   while ((int)$cursor->format('w') !== $targetDow) {
-    $cursor->modify('+1 day');
+    $cursor->modify('+1 day');     
   }
 
   // Create weekly occurrences until rangeEnd
@@ -91,3 +91,4 @@ foreach ($rows as $r) {
 }
 
 echo json_encode($events);
+
