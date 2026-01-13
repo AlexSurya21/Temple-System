@@ -175,4 +175,5 @@ foreach ($bookings as $booking) {
     </div>
 </div>
 </body>
+
 </html>
