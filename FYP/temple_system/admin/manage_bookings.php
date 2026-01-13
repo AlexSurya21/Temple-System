@@ -3,9 +3,6 @@
  * ============================================================
  * Sri Balathandayuthapani Temple System
  * Manage Bookings Page
- * 
- * Created by: Avenesh A/L Kumaran (1221106783)
- * Last Modified: December 2025
  * ============================================================
  */
 
@@ -687,4 +684,5 @@ while ($row = $stats_result->fetch_assoc()) {
 if ($conn) {
     $conn->close();
 }
+
 ?>
