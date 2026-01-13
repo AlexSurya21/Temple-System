@@ -119,7 +119,7 @@
     <div class="form-container">
         <div class="form-header">
             <h1>🕉️ Temple Payment</h1>
-            <p>Sri Balathandayuthapani Temple</p>
+            <p>Sri Balathandayuthapani Temple</p>  
         </div>
         
         <?php
@@ -183,3 +183,4 @@
     </div>
 </body>
 </html>
+
