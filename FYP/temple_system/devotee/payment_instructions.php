@@ -7,7 +7,7 @@ if (!isset($_SESSION['user_id'])) {
   exit;
 }
 
-$donation_id = (int)($_GET['donation_id'] ?? 0);
+$donation_id = (int)($_GET['donation_id'] ?? 0);  
 
 if (empty($donation_id)) {
   // Debug: show what we received
@@ -361,4 +361,5 @@ $account_number = '160170114355';
     }
   </script>
 </body>
+
 </html>
