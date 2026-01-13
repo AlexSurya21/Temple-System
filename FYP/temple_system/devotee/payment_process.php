@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $user_id = $_POST['user_id'] ?? null;
     $amount = $_POST['amount'] ?? 0;
     $payment_type = $_POST['payment_type'] ?? '';
-    $payment_method = $_POST['payment_method'] ?? '';
+    $payment_method = $_POST['payment_method'] ?? '';  
     $booking_id = $_POST['booking_id'] ?? null;
     $donation_id = $_POST['donation_id'] ?? null;
     
@@ -110,4 +110,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     header("Location: payment_form.php");
     exit();
 }
+
 ?>
