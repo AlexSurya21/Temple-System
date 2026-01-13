@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $userId   = $_SESSION['user_id'];
-$userName = $_SESSION['user_name'] ?? "Devotee";
+$userName = $_SESSION['user_name'] ?? "Devotee";  
 
 // =============================
 //  SIMPLE DASHBOARD STATISTICS
@@ -548,4 +548,5 @@ if ($conn) {
 </div>
 </body>
 </html>
+
 
