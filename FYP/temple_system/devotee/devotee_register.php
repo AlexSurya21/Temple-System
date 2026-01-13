@@ -2,7 +2,7 @@
 session_start();
 require_once "../includes/db_connect.php";
 $error = "";
-$success = "";
+$success = ""; 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $name     = trim($_POST["full_name"] ?? "");
     $email    = trim($_POST["email"] ?? "");
@@ -80,4 +80,5 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <a href="devotee_login.php">Already have account? Login</a>
   </div>
 </body>
+
 </html>
