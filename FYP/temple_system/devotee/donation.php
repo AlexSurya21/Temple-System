@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once "../includes/db_connect.php";
+require_once "../includes/db_connect.php"; 
 
 if (!isset($_SESSION['user_id'])) {
   header("Location: devotee_login.php");
@@ -249,4 +249,5 @@ $user_name = $user['name'] ?? 'Devotee';
     </form>
   </div>
 </body>
+
 </html>
