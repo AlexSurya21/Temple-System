@@ -24,7 +24,7 @@ $res = $stmt->get_result();
 
 $bookings = [];
 $pendingCount = 0;
-$approvedCount = 0;
+$approvedCount = 0;   
 
 while ($row = $res->fetch_assoc()) {
     $bookings[] = $row;
@@ -378,3 +378,4 @@ function prettyStatus($status) {
 
 </body>
 </html>
+
