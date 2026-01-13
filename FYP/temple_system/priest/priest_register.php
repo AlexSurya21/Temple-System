@@ -5,7 +5,7 @@ require_once "../includes/db_connect.php";
 // Initialize messages
 $success = "";
 $error = "";
-
+ 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Basic sanitization
     $name = trim($_POST['priest_name'] ?? "");
@@ -141,4 +141,5 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     </div>
 </div>
 </body>
+
 </html>
