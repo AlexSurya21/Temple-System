@@ -3,9 +3,6 @@
  * ============================================================
  * Sri Balathandayuthapani Temple System
  * Admin Dashboard - FIXED FOR YOUR DATABASE
- * 
- * Created by: Avenesh A/L Kumaran (1221106783)
- * Last Modified: January 2025
  * ============================================================
  */
 
@@ -539,4 +536,5 @@ try {
 if ($conn) {
     $conn->close();
 }
+
 ?>
