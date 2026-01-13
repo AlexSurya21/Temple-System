@@ -3,7 +3,7 @@ session_start();
 require_once "../includes/db_connect.php";
 
 if (!isset($_SESSION['user_id'])) {
-    header("Location: devotee_login.php");
+    header("Location: devotee_login.php"); 
     exit;
 }
 
@@ -58,3 +58,4 @@ a{text-decoration:none;color:#7d2cff;font-weight:600}
 
 </body>
 </html>
+
