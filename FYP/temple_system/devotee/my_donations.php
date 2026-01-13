@@ -3,7 +3,7 @@ session_start();
 require_once "../includes/db_connect.php";
 
 if (!isset($_SESSION['user_id'])) {
-  header("Location: devotee_login.php");
+  header("Location: devotee_login.php");  
   exit;
 }
 
@@ -309,4 +309,5 @@ foreach ($donations as $donation) {
     <?php endif; ?>
   </div>
 </body>
+
 </html>
