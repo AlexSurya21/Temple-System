@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once "../includes/db_connect.php";
+require_once "../includes/db_connect.php"; 
 
 if (!isset($_SESSION['user_id'])) {
   header("Location: devotee_login.php");
@@ -47,4 +47,5 @@ if ($stmt->execute()) {
 
 $stmt->close();
 header("Location: donation.php?error=db");
+
 exit;
