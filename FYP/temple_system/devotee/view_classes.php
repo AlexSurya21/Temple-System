@@ -15,7 +15,7 @@ $classes = [];
 $registered = [];   // active registrations only
 
 // ✅ helper to safely read possible column names
-function field($row, $options, $default = "") {
+function field($row, $options, $default = "") {  
     foreach ($options as $name) {
         if (isset($row[$name]) && $row[$name] !== "" && $row[$name] !== null) {
             return $row[$name];
@@ -324,3 +324,4 @@ if ($conn) {
 </div>
 </body>
 </html>
+
