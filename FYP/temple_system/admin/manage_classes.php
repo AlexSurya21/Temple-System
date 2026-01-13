@@ -3,9 +3,6 @@
  * ============================================================
  * Sri Balathandayuthapani Temple System
  * Manage Classes Page
- * 
- * Created by: Avenesh A/L Kumaran (1221106783)
- * Last Modified: December 2025
  * ============================================================
  */
 
@@ -845,3 +842,4 @@ if ($conn) {
     $conn->close();
 }
 ?>
+
