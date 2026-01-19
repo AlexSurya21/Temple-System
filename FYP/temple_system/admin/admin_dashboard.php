@@ -2,7 +2,7 @@
 /**
  * ============================================================
  * Sri Balathandayuthapani Temple System
- * Admin Dashboard - FIXED FOR YOUR DATABASE
+ * Admin Dashboard Page
  * ============================================================
  */
 
@@ -10,7 +10,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Prevent browser caching
+// Prevent browser caching - ENHANCED SECURITY
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
@@ -19,14 +19,16 @@ header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
 session_start();
 
 // Check if admin is logged in
-if (!isset($_SESSION['admin_id'])) {
+if (!isset($_SESSION['admin_id'])) 
+{
     header("Location: admin_login.php");
     exit();
 }
 
 // Check session timeout (30 minutes = 1800 seconds)
 $timeout_duration = 1800;
-if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > $timeout_duration) {
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) > $timeout_duration) 
+{
     session_unset();
     session_destroy();
     header("Location: admin_login.php?timeout=1");
@@ -40,7 +42,8 @@ $_SESSION['last_activity'] = time();
 require_once('../includes/db_connect.php');
 
 // Check database connection
-if (!$conn) {
+if (!$conn) 
+{
     die("Database connection failed: " . mysqli_connect_error());
 }
 
@@ -50,7 +53,8 @@ $admin_name = $_SESSION['admin_name'] ?? 'Admin';
 $admin_role = $_SESSION['admin_role'] ?? 'staff';
 
 // Initialize statistics
-$stats = [
+$stats = 
+[
     'bookings' => 0,
     'donations' => 0,
     'donation_amount' => 0,
@@ -65,7 +69,8 @@ $recent_donations = null;
 $upcoming_events = null;
 
 // Fetch statistics - FIXED TO MATCH YOUR DATABASE
-try {
+try 
+{
     // Total Bookings - YOUR TABLE IS 'booking'
     $result = $conn->query("SELECT COUNT(*) as total FROM booking");
     if ($result) {
@@ -74,7 +79,8 @@ try {
 
     // Total Donations - YOUR TABLE IS 'donation'
     $result = $conn->query("SELECT COUNT(*) as total, COALESCE(SUM(amount), 0) as total_amount FROM donation");
-    if ($result) {
+    if ($result) 
+    {
         $donation_data = $result->fetch_assoc();
         $stats['donations'] = $donation_data['total'];
         $stats['donation_amount'] = $donation_data['total_amount'];
@@ -82,21 +88,21 @@ try {
 
     // Total Events - YOUR TABLE IS 'event'
     $result = $conn->query("SELECT COUNT(*) as total FROM event");
-    if ($result) {
+    if ($result) 
+    {
         $stats['events'] = $result->fetch_assoc()['total'];
     }
 
     // Total Payments
     $result = $conn->query("SELECT COUNT(*) as total, COALESCE(SUM(amount), 0) as total_amount FROM payments");
-    if ($result) {
+    if ($result) 
+    {
         $payment_data = $result->fetch_assoc();
         $stats['payments'] = $payment_data['total'];
         $stats['payment_amount'] = $payment_data['total_amount'];
     }
 
     // Fetch recent bookings - FIXED QUERY FOR YOUR DATABASE
-    // Your table: booking, columns: booking_id, user_id, booking_type, booking_date, booking_status, created_at
-    // Your user table: user, column: full_name
     $recent_bookings = $conn->query("SELECT b.*, u.full_name as customer_name 
                                      FROM booking b 
                                      LEFT JOIN user u ON b.user_id = u.user_id 
@@ -104,7 +110,6 @@ try {
                                      LIMIT 5");
 
     // Fetch recent donations - FIXED QUERY FOR YOUR DATABASE
-    // Your table: donation, columns: donation_id, user_id, amount, donation_type, donation_date, is_anonymous
     $recent_donations = $conn->query("SELECT d.*, u.full_name as donor_name 
                                       FROM donation d 
                                       LEFT JOIN user u ON d.user_id = u.user_id 
@@ -112,13 +117,14 @@ try {
                                       LIMIT 5");
 
     // Fetch upcoming events - FIXED QUERY FOR YOUR DATABASE
-    // Your table: event, columns: event_id, event_name, event_date, event_time
     $upcoming_events = $conn->query("SELECT * FROM event 
                                      WHERE event_date >= CURDATE() 
                                      ORDER BY event_date ASC 
                                      LIMIT 5");
 
-} catch (Exception $e) {
+} 
+catch (Exception $e) 
+{
     error_log("Dashboard Error: " . $e->getMessage());
 }
 ?>
@@ -129,19 +135,22 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Sri Balathandayuthapani Temple</title>
     <style>
-        * {
+        * 
+        {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        body {
+        body 
+        {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
         }
 
-        .header {
+        .header 
+        {
             background: rgba(255, 255, 255, 0.95);
             padding: 20px 40px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -150,23 +159,27 @@ try {
             align-items: center;
         }
 
-        .header h1 {
+        .header h1 
+        {
             color: #764ba2;
             font-size: 24px;
         }
 
-        .header .user-info {
+        .header .user-info 
+        {
             display: flex;
             align-items: center;
             gap: 20px;
         }
 
-        .header .user-info span {
+        .header .user-info span 
+        {
             color: #333;
             font-weight: 500;
         }
 
-        .header .logout-btn {
+        .header .logout-btn 
+        {
             background: #e74c3c;
             color: white;
             padding: 10px 20px;
@@ -177,17 +190,20 @@ try {
             transition: background 0.3s;
         }
 
-        .header .logout-btn:hover {
+        .header .logout-btn:hover 
+        {
             background: #c0392b;
         }
 
-        .container {
+        .container 
+        {
             max-width: 1400px;
             margin: 30px auto;
             padding: 0 20px;
         }
 
-        .welcome-section {
+        .welcome-section 
+        {
             background: white;
             padding: 30px;
             border-radius: 10px;
@@ -195,17 +211,20 @@ try {
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
-        .welcome-section h2 {
+        .welcome-section h2 
+        {
             color: #764ba2;
             margin-bottom: 10px;
         }
 
-        .welcome-section p {
+        .welcome-section p 
+        {
             color: #666;
             font-size: 16px;
         }
 
-        .stats-grid {
+        .stats-grid 
+        {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
@@ -521,12 +540,79 @@ try {
     </div>
 
     <script>
+        // ============================================================
+        // SECURITY: PREVENT BACK BUTTON ACCESS AFTER LOGOUT
+        // ============================================================
+        
+        // Prevent back button navigation
+        (function() {
+            window.history.pushState(null, "", window.location.href);        
+            window.onpopstate = function() {
+                window.history.pushState(null, "", window.location.href);
+            };
+        })();
+
+        // Prevent page from being loaded from browser cache
+        window.onload = function() {
+            // Check if page was accessed from back/forward button
+            if (performance.navigation.type === 2) {
+                // Reload the page to verify session
+                window.location.reload();
+            }
+        };
+
+        // Clear any cached data when page is unloaded
+        window.onunload = function() {
+            void(0);
+        };
+
+        // Handle browser back/forward cache (bfcache)
+        window.addEventListener('pageshow', function(event) {
+            // If page is loaded from cache
+            if (event.persisted) {
+                // Force reload to verify session
+                window.location.reload();
+            }
+        });
+
+        // Logout confirmation with security enhancement
         function confirmLogout() {
-            return confirm('Are you sure you want to logout from the Admin Panel?');
+            if (confirm('Are you sure you want to logout from the Admin Panel?')) {
+                // Prevent back button after logout
+                window.history.forward();
+                
+                // Clear session storage
+                if (typeof(Storage) !== "undefined") {
+                    sessionStorage.clear();
+                }
+                
+                return true;
+            }
+            return false;
         }
+
+        // Disable right-click context menu (optional security measure)
+        // Uncomment if you want to disable right-click
+        // document.addEventListener('contextmenu', function(e) {
+        //     e.preventDefault();
+        // });
+
+        // Prevent multiple tabs (optional - uncomment if needed)
+        // window.addEventListener('storage', function(e) {
+        //     if (e.key === 'getSessionStorage') {
+        //         localStorage.setItem('sessionStorage', JSON.stringify(sessionStorage));
+        //         localStorage.removeItem('sessionStorage');
+        //     } else if (e.key === 'sessionStorage' && !sessionStorage.length) {
+        //         alert('Admin panel is already open in another tab!');
+        //         window.location.href = 'admin_logout.php';
+        //     }
+        // });
 
         console.log('🕉️ Sri Balathandayuthapani Temple System');
         console.log('✅ Dashboard loaded successfully');
+        console.log('🔒 Back button protection: ENABLED');
+        console.log('🔒 Cache prevention: ENABLED');
+        console.log('🔒 Session validation: ACTIVE');
     </script>
 </body>
 </html>
@@ -536,5 +622,4 @@ try {
 if ($conn) {
     $conn->close();
 }
-
 ?>
