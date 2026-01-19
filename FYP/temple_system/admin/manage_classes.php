@@ -62,15 +62,38 @@ if (isset($_POST['add_class'])) {
     $class_fee = (float)$_POST['class_fee'];
     $current_students = 0;
     
-    // Check if class name already exists
-    $check_stmt = $conn->prepare("SELECT class_id FROM cultural_class WHERE class_name = ?");
-    $check_stmt->bind_param("s", $class_name);
-    $check_stmt->execute();
-    $check_result = $check_stmt->get_result();
+    // Validation flag
+    $validation_passed = true;
     
-    if ($check_result->num_rows > 0) {
-        $error_message = "This class name already exists in the list. Please use a different name.";
-    } else {
+    // Check for duplicate class name (case-insensitive)
+    $check_name_stmt = $conn->prepare("SELECT class_id FROM cultural_class WHERE LOWER(class_name) = LOWER(?)");
+    $check_name_stmt->bind_param("s", $class_name);
+    $check_name_stmt->execute();
+    $check_name_result = $check_name_stmt->get_result();
+    
+    if ($check_name_result->num_rows > 0) {
+        $error_message = "A class with this name already exists (case-insensitive). Please use a different name.";
+        $validation_passed = false;
+    }
+    $check_name_stmt->close();
+    
+    // Check for schedule clash (same day and time)
+    if ($validation_passed) {
+        $check_clash_stmt = $conn->prepare("SELECT class_id, class_name FROM cultural_class WHERE schedule_day = ? AND schedule_time = ?");
+        $check_clash_stmt->bind_param("ss", $schedule_day, $schedule_time);
+        $check_clash_stmt->execute();
+        $check_clash_result = $check_clash_stmt->get_result();
+        
+        if ($check_clash_result->num_rows > 0) {
+            $clash_class = $check_clash_result->fetch_assoc();
+            $error_message = "Schedule clash detected! Another class '" . htmlspecialchars($clash_class['class_name']) . "' is already scheduled on " . $schedule_day . " at " . date('h:i A', strtotime($schedule_time)) . ".";
+            $validation_passed = false;
+        }
+        $check_clash_stmt->close();
+    }
+    
+    // Insert class if validation passed
+    if ($validation_passed) {
         $stmt = $conn->prepare("INSERT INTO cultural_class (class_name, class_description, schedule_day, schedule_time, duration_minutes, max_students, current_students, class_fee) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->bind_param("ssssiiid", $class_name, $class_description, $schedule_day, $schedule_time, $duration_minutes, $max_students, $current_students, $class_fee);
         
@@ -81,7 +104,6 @@ if (isset($_POST['add_class'])) {
         }
         $stmt->close();
     }
-    $check_stmt->close();
 }
 
 // Handle Update Class
@@ -95,15 +117,48 @@ if (isset($_POST['update_class'])) {
     $max_students = (int)$_POST['max_students'];
     $class_fee = (float)$_POST['class_fee'];
     
-    $stmt = $conn->prepare("UPDATE cultural_class SET class_name = ?, class_description = ?, schedule_day = ?, schedule_time = ?, duration_minutes = ?, max_students = ?, class_fee = ? WHERE class_id = ?");
-    $stmt->bind_param("ssssiidi", $class_name, $class_description, $schedule_day, $schedule_time, $duration_minutes, $max_students, $class_fee, $class_id);
+    // Validation flag
+    $validation_passed = true;
     
-    if ($stmt->execute()) {
-        $success_message = "Class updated successfully!";
-    } else {
-        $error_message = "Failed to update class.";
+    // Check for duplicate class name (case-insensitive), excluding current class
+    $check_name_stmt = $conn->prepare("SELECT class_id FROM cultural_class WHERE LOWER(class_name) = LOWER(?) AND class_id != ?");
+    $check_name_stmt->bind_param("si", $class_name, $class_id);
+    $check_name_stmt->execute();
+    $check_name_result = $check_name_stmt->get_result();
+    
+    if ($check_name_result->num_rows > 0) {
+        $error_message = "A class with this name already exists (case-insensitive). Please use a different name.";
+        $validation_passed = false;
     }
-    $stmt->close();
+    $check_name_stmt->close();
+    
+    // Check for schedule clash (same day and time), excluding current class
+    if ($validation_passed) {
+        $check_clash_stmt = $conn->prepare("SELECT class_id, class_name FROM cultural_class WHERE schedule_day = ? AND schedule_time = ? AND class_id != ?");
+        $check_clash_stmt->bind_param("ssi", $schedule_day, $schedule_time, $class_id);
+        $check_clash_stmt->execute();
+        $check_clash_result = $check_clash_stmt->get_result();
+        
+        if ($check_clash_result->num_rows > 0) {
+            $clash_class = $check_clash_result->fetch_assoc();
+            $error_message = "Schedule clash detected! Another class '" . htmlspecialchars($clash_class['class_name']) . "' is already scheduled on " . $schedule_day . " at " . date('h:i A', strtotime($schedule_time)) . ".";
+            $validation_passed = false;
+        }
+        $check_clash_stmt->close();
+    }
+    
+    // Update class if validation passed
+    if ($validation_passed) {
+        $stmt = $conn->prepare("UPDATE cultural_class SET class_name = ?, class_description = ?, schedule_day = ?, schedule_time = ?, duration_minutes = ?, max_students = ?, class_fee = ? WHERE class_id = ?");
+        $stmt->bind_param("ssssiidi", $class_name, $class_description, $schedule_day, $schedule_time, $duration_minutes, $max_students, $class_fee, $class_id);
+        
+        if ($stmt->execute()) {
+            $success_message = "Class updated successfully!";
+        } else {
+            $error_message = "Failed to update class.";
+        }
+        $stmt->close();
+    }
 }
 
 // Get filter parameters
@@ -613,7 +668,7 @@ $availability_percent = $stats['total_capacity'] > 0 ? round(($stats['total_stud
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>No.</th>
                             <th>Class Name</th>
                             <th>Schedule</th>
                             <th>Duration</th>
@@ -623,12 +678,14 @@ $availability_percent = $stats['total_capacity'] > 0 ? round(($stats['total_stud
                         </tr>
                     </thead>
                     <tbody>
-                        <?php while ($class = $result->fetch_assoc()): 
+                        <?php 
+                        $row_number = 1;
+                        while ($class = $result->fetch_assoc()): 
                             $current = (int)($class['current_students'] ?? 0);
                             $max = (int)($class['max_students'] ?? 0);
                         ?>
                             <tr>
-                                <td>#<?php echo $class['class_id']; ?></td>
+                                <td><?php echo $row_number++; ?></td>
                                 <td>
                                     <strong><?php echo htmlspecialchars($class['class_name']); ?></strong><br>
                                     <small style="color: #999;"><?php echo htmlspecialchars(substr($class['class_description'] ?? '', 0, 50)); ?>...</small>
@@ -643,7 +700,7 @@ $availability_percent = $stats['total_capacity'] > 0 ? round(($stats['total_stud
                                 <td>
                                     <div class="action-buttons">
                                         <button onclick='openEditModal(<?php echo json_encode($class); ?>)' class="btn btn-warning">
-                                            Edit
+                                            Update
                                         </button>
                                         <button onclick="confirmDelete(<?php echo $class['class_id']; ?>)" class="btn btn-danger">
                                             Delete
@@ -831,6 +888,20 @@ $availability_percent = $stats['total_capacity'] > 0 ? round(($stats['total_stud
                 window.location.href = 'manage_classes.php?delete=1&id=' + classId;
             }
         }
+
+        // Auto-hide alerts after 5 seconds
+        window.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                setTimeout(function() {
+                    alert.style.opacity = '0';
+                    alert.style.transition = 'opacity 0.5s';
+                    setTimeout(function() {
+                        alert.remove();
+                    }, 500);
+                }, 5000);
+            });
+        });
     </script>
 
 </body>
@@ -842,5 +913,3 @@ if ($conn) {
     $conn->close();
 }
 ?>
-
-
