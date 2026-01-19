@@ -3,6 +3,9 @@
  * ============================================================
  * Sri Balathandayuthapani Temple System
  * Manage Events Page
+ * 
+ * Created by: Avenesh A/L Kumaran (1221106783)
+ * Last Modified: December 2025
  * ============================================================
  */
 
@@ -64,15 +67,48 @@ if (isset($_POST['add_event'])) {
     $event_status = $_POST['event_status'];
     $current_participants = 0;
     
-    $stmt = $conn->prepare("INSERT INTO Event (event_name, event_description, event_date, event_time, venue, max_participants, current_participants, event_type, event_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssssiiss", $event_name, $event_description, $event_date, $event_time, $venue, $max_participants, $current_participants, $event_type, $event_status);
+    // Validation flag
+    $validation_passed = true;
     
-    if ($stmt->execute()) {
-        $success_message = "Event added successfully!";
-    } else {
-        $error_message = "Failed to add event.";
+    // Check for duplicate event name (case-insensitive)
+    $check_name_stmt = $conn->prepare("SELECT event_id FROM Event WHERE LOWER(event_name) = LOWER(?)");
+    $check_name_stmt->bind_param("s", $event_name);
+    $check_name_stmt->execute();
+    $check_name_result = $check_name_stmt->get_result();
+    
+    if ($check_name_result->num_rows > 0) {
+        $error_message = "An event with this name already exists (case-insensitive). Please use a different name.";
+        $validation_passed = false;
     }
-    $stmt->close();
+    $check_name_stmt->close();
+    
+    // Check for date/time clash at the same venue
+    if ($validation_passed) {
+        $check_clash_stmt = $conn->prepare("SELECT event_id, event_name FROM Event WHERE event_date = ? AND event_time = ? AND venue = ?");
+        $check_clash_stmt->bind_param("sss", $event_date, $event_time, $venue);
+        $check_clash_stmt->execute();
+        $check_clash_result = $check_clash_stmt->get_result();
+        
+        if ($check_clash_result->num_rows > 0) {
+            $clash_event = $check_clash_result->fetch_assoc();
+            $error_message = "Time clash detected! The venue '" . htmlspecialchars($venue) . "' is already booked for '" . htmlspecialchars($clash_event['event_name']) . "' on " . date('d M Y', strtotime($event_date)) . " at " . date('h:i A', strtotime($event_time)) . ".";
+            $validation_passed = false;
+        }
+        $check_clash_stmt->close();
+    }
+    
+    // Insert event if validation passed
+    if ($validation_passed) {
+        $stmt = $conn->prepare("INSERT INTO Event (event_name, event_description, event_date, event_time, venue, max_participants, current_participants, event_type, event_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("sssssiiss", $event_name, $event_description, $event_date, $event_time, $venue, $max_participants, $current_participants, $event_type, $event_status);
+        
+        if ($stmt->execute()) {
+            $success_message = "Event added successfully!";
+        } else {
+            $error_message = "Failed to add event.";
+        }
+        $stmt->close();
+    }
 }
 
 // Handle Update Event
@@ -87,15 +123,48 @@ if (isset($_POST['update_event'])) {
     $event_type = $_POST['event_type'];
     $event_status = $_POST['event_status'];
     
-    $stmt = $conn->prepare("UPDATE Event SET event_name = ?, event_description = ?, event_date = ?, event_time = ?, venue = ?, max_participants = ?, event_type = ?, event_status = ? WHERE event_id = ?");
-    $stmt->bind_param("sssssissi", $event_name, $event_description, $event_date, $event_time, $venue, $max_participants, $event_type, $event_status, $event_id);
+    // Validation flag
+    $validation_passed = true;
     
-    if ($stmt->execute()) {
-        $success_message = "Event updated successfully!";
-    } else {
-        $error_message = "Failed to update event.";
+    // Check for duplicate event name (case-insensitive), excluding current event
+    $check_name_stmt = $conn->prepare("SELECT event_id FROM Event WHERE LOWER(event_name) = LOWER(?) AND event_id != ?");
+    $check_name_stmt->bind_param("si", $event_name, $event_id);
+    $check_name_stmt->execute();
+    $check_name_result = $check_name_stmt->get_result();
+    
+    if ($check_name_result->num_rows > 0) {
+        $error_message = "An event with this name already exists (case-insensitive). Please use a different name.";
+        $validation_passed = false;
     }
-    $stmt->close();
+    $check_name_stmt->close();
+    
+    // Check for date/time clash at the same venue, excluding current event
+    if ($validation_passed) {
+        $check_clash_stmt = $conn->prepare("SELECT event_id, event_name FROM Event WHERE event_date = ? AND event_time = ? AND venue = ? AND event_id != ?");
+        $check_clash_stmt->bind_param("sssi", $event_date, $event_time, $venue, $event_id);
+        $check_clash_stmt->execute();
+        $check_clash_result = $check_clash_stmt->get_result();
+        
+        if ($check_clash_result->num_rows > 0) {
+            $clash_event = $check_clash_result->fetch_assoc();
+            $error_message = "Time clash detected! The venue '" . htmlspecialchars($venue) . "' is already booked for '" . htmlspecialchars($clash_event['event_name']) . "' on " . date('d M Y', strtotime($event_date)) . " at " . date('h:i A', strtotime($event_time)) . ".";
+            $validation_passed = false;
+        }
+        $check_clash_stmt->close();
+    }
+    
+    // Update event if validation passed
+    if ($validation_passed) {
+        $stmt = $conn->prepare("UPDATE Event SET event_name = ?, event_description = ?, event_date = ?, event_time = ?, venue = ?, max_participants = ?, event_type = ?, event_status = ? WHERE event_id = ?");
+        $stmt->bind_param("sssssissi", $event_name, $event_description, $event_date, $event_time, $venue, $max_participants, $event_type, $event_status, $event_id);
+        
+        if ($stmt->execute()) {
+            $success_message = "Event updated successfully!";
+        } else {
+            $error_message = "Failed to update event.";
+        }
+        $stmt->close();
+    }
 }
 
 // Get filter parameters
@@ -723,7 +792,7 @@ if ($stats_row = $stats_result->fetch_assoc()) {
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>No.</th>
                             <th>Event Name</th>
                             <th>Date & Time</th>
                             <th>Venue</th>
@@ -734,13 +803,15 @@ if ($stats_row = $stats_result->fetch_assoc()) {
                         </tr>
                     </thead>
                     <tbody>
-                        <?php while ($event = $result->fetch_assoc()): 
+                        <?php 
+                        $row_number = 1;
+                        while ($event = $result->fetch_assoc()): 
                             $current = (int)($event['current_participants'] ?? 0);
                             $max = (int)($event['max_participants'] ?? 0);
                             $is_full = $current >= $max;
                         ?>
                             <tr>
-                                <td>#<?php echo $event['event_id']; ?></td>
+                                <td><?php echo $row_number++; ?></td>
                                 <td>
                                     <strong><?php echo htmlspecialchars($event['event_name']); ?></strong><br>
                                     <small style="color: #999;"><?php echo htmlspecialchars(substr($event['event_description'] ?? '', 0, 50)); ?>...</small>
@@ -766,7 +837,7 @@ if ($stats_row = $stats_result->fetch_assoc()) {
                                 <td>
                                     <div class="action-buttons">
                                         <button onclick='openEditModal(<?php echo json_encode($event); ?>)' class="btn btn-warning">
-                                            Edit
+                                            Update
                                         </button>
                                         <button onclick="confirmDelete(<?php echo $event['event_id']; ?>)" class="btn btn-danger">
                                             Delete
@@ -814,7 +885,16 @@ if ($stats_row = $stats_result->fetch_assoc()) {
 
                 <div class="form-group">
                     <label>Venue *</label>
-                    <input type="text" name="venue" required>
+                    <select name="venue" required>
+                        <option value="">Select Venue</option>
+                        <option value="Main Hall">Main Hall</option>
+                        <option value="Temple Courtyard">Temple Courtyard</option>
+                        <option value="Prayer Hall">Prayer Hall</option>
+                        <option value="Community Center">Community Center</option>
+                        <option value="Outdoor Pavilion">Outdoor Pavilion</option>
+                        <option value="Wedding Hall">Wedding Hall</option>
+                        <option value="Conference Room">Conference Room</option>
+                    </select>
                 </div>
 
                 <div class="form-group">
@@ -881,7 +961,16 @@ if ($stats_row = $stats_result->fetch_assoc()) {
 
                 <div class="form-group">
                     <label>Venue *</label>
-                    <input type="text" name="venue" id="edit_venue" required>
+                    <select name="venue" id="edit_venue" required>
+                        <option value="">Select Venue</option>
+                        <option value="Main Hall">Main Hall</option>
+                        <option value="Temple Courtyard">Temple Courtyard</option>
+                        <option value="Prayer Hall">Prayer Hall</option>
+                        <option value="Community Center">Community Center</option>
+                        <option value="Outdoor Pavilion">Outdoor Pavilion</option>
+                        <option value="Wedding Hall">Wedding Hall</option>
+                        <option value="Conference Room">Conference Room</option>
+                    </select>
                 </div>
 
                 <div class="form-group">
@@ -979,6 +1068,4 @@ if ($stats_row = $stats_result->fetch_assoc()) {
 if ($conn) {
     $conn->close();
 }
-
 ?>
-
