@@ -542,11 +542,15 @@ while ($row = $stats_result->fetch_assoc()) {
                     <div class="filter-group">
                         <label>Booking Type</label>
                         <select name="type">
-                            <option value="all" <?php echo $filter_type == 'all' ? 'selected' : ''; ?>>All Types</option>
-                            <option value="wedding_hall" <?php echo $filter_type == 'wedding_hall' ? 'selected' : ''; ?>>Wedding Hall</option>
-                            <option value="priest_session" <?php echo $filter_type == 'priest_session' ? 'selected' : ''; ?>>Priest Session</option>
-                            <option value="special_pooja" <?php echo $filter_type == 'special_pooja' ? 'selected' : ''; ?>>Special Pooja</option>
-                        </select>
+                        <option value="all">All Types</option>
+                        <option value="wedding_hall">Wedding Hall</option>
+                        <option value="priest_session">Priest Session</option>
+                        <option value="special_pooja">Special Pooja</option>
+                        <option value="archana">Archana Service</option>
+                        <option value="abhishekam">Abhishekam Ceremony</option>
+                        <option value="homam">Homam/Fire Ritual</option>
+                        <option value="community_hall">Community Hall</option>
+                    </select>
                     </div>
 
                     <div class="filter-group">
@@ -686,3 +690,4 @@ if ($conn) {
 }
 
 ?>
+
