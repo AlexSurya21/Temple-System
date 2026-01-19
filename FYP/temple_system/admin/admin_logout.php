@@ -3,6 +3,9 @@
  * ============================================================
  * Sri Balathandayuthapani Temple System
  * Admin Logout Script with Security Features
+ * 
+ * Created by: Avenesh A/L Kumaran (1221106783)
+ * Last Modified: December 2025
  * ============================================================
  */
 
@@ -26,5 +29,4 @@ if (isset($_COOKIE[session_name()])) {
 // Redirect to login page with success message
 header("Location: admin_login.php?logout=success");
 exit();
-
 ?>
