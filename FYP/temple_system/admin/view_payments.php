@@ -2,7 +2,7 @@
 /**
  * ============================================================
  * Sri Balathandayuthapani Temple System
- * View Payments Page - FIXED
+ * View Payments Page - Database Corrected
  * ============================================================
  */
 
@@ -41,7 +41,6 @@ if (isset($_POST['update_status'])) {
     $payment_id = (int)$_POST['payment_id'];
     $payment_status = $_POST['payment_status'];
     
-    // FIXED: Changed 'payment' to 'payments'
     $stmt = $conn->prepare("UPDATE payments SET payment_status = ? WHERE payment_id = ?");
     $stmt->bind_param("si", $payment_status, $payment_id);
     
@@ -61,39 +60,44 @@ $date_from = $_GET['date_from'] ?? '';
 $date_to = $_GET['date_to'] ?? '';
 $search = $_GET['search'] ?? '';
 
-// Build query - FIXED: Changed 'payment' to 'payments'
-$query = "SELECT * FROM payments WHERE 1=1";
+// Build query - JOIN with user table to get customer information
+// CORRECTED: Using 'full_name' instead of 'name' to match database schema
+$query = "SELECT p.*, u.full_name as customer_name, u.email as customer_email 
+          FROM payments p 
+          LEFT JOIN user u ON p.user_id = u.user_id 
+          WHERE 1=1";
 
 if ($filter_type != 'all') {
-    $query .= " AND payment_type = '" . $conn->real_escape_string($filter_type) . "'";
+    $query .= " AND p.payment_type = '" . $conn->real_escape_string($filter_type) . "'";
 }
 
 if ($filter_status != 'all') {
-    $query .= " AND payment_status = '" . $conn->real_escape_string($filter_status) . "'";
+    $query .= " AND p.payment_status = '" . $conn->real_escape_string($filter_status) . "'";
 }
 
 if ($filter_method != 'all') {
-    $query .= " AND payment_method = '" . $conn->real_escape_string($filter_method) . "'";
+    $query .= " AND p.payment_method = '" . $conn->real_escape_string($filter_method) . "'";
 }
 
 if (!empty($date_from)) {
-    $query .= " AND payment_date >= '" . $conn->real_escape_string($date_from) . "'";
+    $query .= " AND p.payment_date >= '" . $conn->real_escape_string($date_from) . "'";
 }
 
 if (!empty($date_to)) {
-    $query .= " AND payment_date <= '" . $conn->real_escape_string($date_to) . " 23:59:59'";
+    $query .= " AND p.payment_date <= '" . $conn->real_escape_string($date_to) . " 23:59:59'";
 }
 
 if (!empty($search)) {
     $search_term = $conn->real_escape_string($search);
-    $query .= " AND (transaction_id LIKE '%$search_term%' OR receipt_number LIKE '%$search_term%')";
+    // CORRECTED: Using 'full_name' in search query
+    $query .= " AND (p.receipt_number LIKE '%$search_term%' OR u.full_name LIKE '%$search_term%' OR u.email LIKE '%$search_term%')";
 }
 
-$query .= " ORDER BY payment_date DESC";
+$query .= " ORDER BY p.payment_date DESC";
 
 $result = $conn->query($query);
 
-// Get statistics - FIXED: Changed 'payment' to 'payments'
+// Get statistics
 $stats = [
     'total_payments' => 0,
     'total_amount' => 0,
@@ -345,6 +349,13 @@ if ($stats_row = $stats_result->fetch_assoc()) {
             font-size: 12px;
         }
 
+        .btn-print {
+            background: #6f42c1;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
         .table-section {
             background: white;
             padding: 25px;
@@ -487,6 +498,11 @@ if ($stats_row = $stats_result->fetch_assoc()) {
             margin-top: 20px;
         }
 
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
@@ -499,6 +515,21 @@ if ($stats_row = $stats_result->fetch_assoc()) {
 
             .filters-grid {
                 grid-template-columns: 1fr;
+            }
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .print-receipt, .print-receipt * {
+                visibility: visible;
+            }
+            .print-receipt {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
             }
         }
     </style>
@@ -601,7 +632,7 @@ if ($stats_row = $stats_result->fetch_assoc()) {
 
                     <div class="filter-group">
                         <label>Search</label>
-                        <input type="text" name="search" placeholder="Transaction ID or Receipt" value="<?php echo htmlspecialchars($search); ?>">
+                        <input type="text" name="search" placeholder="Name, Email or Receipt" value="<?php echo htmlspecialchars($search); ?>">
                     </div>
                 </div>
 
@@ -620,8 +651,9 @@ if ($stats_row = $stats_result->fetch_assoc()) {
                 <table>
                     <thead>
                         <tr>
-                            <th>Payment ID</th>
-                            <th>Transaction ID</th>
+                            <th>No.</th>
+                            <th>Customer Name</th>
+                            <th>Email</th>
                             <th>Amount</th>
                             <th>Type</th>
                             <th>Status</th>
@@ -631,14 +663,14 @@ if ($stats_row = $stats_result->fetch_assoc()) {
                         </tr>
                     </thead>
                     <tbody>
-                        <?php while ($payment = $result->fetch_assoc()): ?>
+                        <?php 
+                        $row_number = 1;
+                        while ($payment = $result->fetch_assoc()): 
+                        ?>
                             <tr>
-                                <td><strong>#<?php echo $payment['payment_id']; ?></strong></td>
-                                <td>
-                                    <small style="font-family: monospace; font-size: 11px;">
-                                        <?php echo htmlspecialchars($payment['transaction_id'] ?? 'N/A'); ?>
-                                    </small>
-                                </td>
+                                <td><?php echo $row_number++; ?></td>
+                                <td><strong><?php echo htmlspecialchars($payment['customer_name'] ?? 'N/A'); ?></strong></td>
+                                <td><small><?php echo htmlspecialchars($payment['customer_email'] ?? 'N/A'); ?></small></td>
                                 <td class="amount-display">RM <?php echo number_format($payment['amount'], 2); ?></td>
                                 <td>
                                     <span class="type-badge">
@@ -662,9 +694,14 @@ if ($stats_row = $stats_result->fetch_assoc()) {
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <button onclick='openStatusModal(<?php echo json_encode($payment); ?>)' class="btn btn-info">
-                                        Update
-                                    </button>
+                                    <div class="action-buttons">
+                                        <button onclick='openStatusModal(<?php echo json_encode($payment); ?>)' class="btn btn-info">
+                                            Update
+                                        </button>
+                                        <button onclick='printReceipt(<?php echo json_encode($payment); ?>)' class="btn btn-print">
+                                            Print
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
@@ -688,8 +725,8 @@ if ($stats_row = $stats_result->fetch_assoc()) {
                 <input type="hidden" name="payment_id" id="status_payment_id">
                 
                 <div class="form-group">
-                    <label>Payment ID</label>
-                    <input type="text" id="display_payment_id" readonly style="background: #f5f5f5;">
+                    <label>Customer Name</label>
+                    <input type="text" id="display_customer_name" readonly style="background: #f5f5f5;">
                 </div>
 
                 <div class="form-group">
@@ -723,7 +760,7 @@ if ($stats_row = $stats_result->fetch_assoc()) {
     <script>
         function openStatusModal(paymentData) {
             document.getElementById('status_payment_id').value = paymentData.payment_id;
-            document.getElementById('display_payment_id').value = '#' + paymentData.payment_id;
+            document.getElementById('display_customer_name').value = paymentData.customer_name || 'N/A';
             document.getElementById('display_amount').value = 'RM ' + parseFloat(paymentData.amount).toFixed(2);
             document.getElementById('display_current_status').value = paymentData.payment_status.charAt(0).toUpperCase() + paymentData.payment_status.slice(1);
             document.getElementById('status_payment_status').value = paymentData.payment_status;
@@ -735,20 +772,71 @@ if ($stats_row = $stats_result->fetch_assoc()) {
             document.getElementById('statusModal').classList.remove('active');
         }
 
-        window.onclick = function(event) {
-            const statusModal = document.getElementById('statusModal');
-            if (event.target == statusModal) {
+        function printReceipt(paymentData) {
+            const printWindow = window.open('', '', 'height=600,width=800');
+            
+            printWindow.document.write('<html><head><title>Payment Receipt</title>');
+            printWindow.document.write('<style>');
+            printWindow.document.write('body { font-family: Arial, sans-serif; padding: 40px; }');
+            printWindow.document.write('.receipt-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }');
+            printWindow.document.write('.receipt-header h1 { color: #764ba2; margin-bottom: 5px; }');
+            printWindow.document.write('.receipt-header p { color: #666; }');
+            printWindow.document.write('.receipt-details { margin: 20px 0; }');
+            printWindow.document.write('.detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }');
+            printWindow.document.write('.detail-label { font-weight: bold; color: #333; }');
+            printWindow.document.write('.detail-value { color: #666; }');
+            printWindow.document.write('.amount-total { font-size: 24px; color: #28a745; font-weight: bold; text-align: center; margin: 30px 0; padding: 20px; background: #f8f9fa; border-radius: 10px; }');
+            printWindow.document.write('.receipt-footer { margin-top: 50px; text-align: center; color: #999; font-size: 12px; }');
+            printWindow.document.write('</style>');
+            printWindow.document.write('</head><body>');
+            
+            printWindow.document.write('<div class="receipt-header">');
+            printWindow.document.write('<h1>🕉️ Sri Balathandayuthapani Temple</h1>');
+            printWindow.document.write('<p>Payment Receipt</p>');
+            printWindow.document.write('</div>');
+            
+            printWindow.document.write('<div class="receipt-details">');
+            printWindow.document.write('<div class="detail-row"><span class="detail-label">Receipt Number:</span><span class="detail-value">' + (paymentData.receipt_number || 'N/A') + '</span></div>');
+            printWindow.document.write('<div class="detail-row"><span class="detail-label">Customer Name:</span><span class="detail-value">' + (paymentData.customer_name || 'N/A') + '</span></div>');
+            printWindow.document.write('<div class="detail-row"><span class="detail-label">Email:</span><span class="detail-value">' + (paymentData.customer_email || 'N/A') + '</span></div>');
+            printWindow.document.write('<div class="detail-row"><span class="detail-label">Payment Type:</span><span class="detail-value">' + (paymentData.payment_type ? paymentData.payment_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'N/A') + '</span></div>');
+            printWindow.document.write('<div class="detail-row"><span class="detail-label">Payment Method:</span><span class="detail-value">' + (paymentData.payment_method ? paymentData.payment_method.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'N/A') + '</span></div>');
+            printWindow.document.write('<div class="detail-row"><span class="detail-label">Payment Status:</span><span class="detail-value">' + (paymentData.payment_status ? paymentData.payment_status.charAt(0).toUpperCase() + paymentData.payment_status.slice(1) : 'N/A') + '</span></div>');
+            printWindow.document.write('<div class="detail-row"><span class="detail-label">Payment Date:</span><span class="detail-value">' + new Date(paymentData.payment_date).toLocaleString() + '</span></div>');
+            printWindow.document.write('</div>');
+            
+            printWindow.document.write('<div class="amount-total">');
+            printWindow.document.write('Total Amount: RM ' + parseFloat(paymentData.amount).toFixed(2));
+            printWindow.document.write('</div>');
+            
+            if (paymentData.notes) {
+                printWindow.document.write('<div style="margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 5px;">');
+                printWindow.document.write('<div class="detail-label" style="margin-bottom: 10px;">Notes:</div>');
+                printWindow.document.write('<div class="detail-value">' + paymentData.notes + '</div>');
+                printWindow.document.write('</div>');
+            }
+            
+            printWindow.document.write('<div class="receipt-footer">');
+            printWindow.document.write('<p>Thank you for your payment!</p>');
+            printWindow.document.write('<p>This is a computer-generated receipt and does not require a signature.</p>');
+            printWindow.document.write('<p>Generated on: ' + new Date().toLocaleString() + '</p>');
+            printWindow.document.write('</div>');
+            
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            
+            setTimeout(function() {
+                printWindow.print();
+            }, 250);
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('statusModal').addEventListener('click', function(e) {
+            if (e.target === this) {
                 closeStatusModal();
             }
-        }
+        });
     </script>
-
 </body>
 </html>
-
 <?php
-if ($conn) {
-    $conn->close();
-}
-
-?>
