@@ -517,6 +517,102 @@ if ($stats_row = $stats_result->fetch_assoc()) {
             text-align: right;
         }
 
+        /* ========================================
+           PRINT STYLES - Only print the table
+           ======================================== */
+        @media print {
+            /* Hide everything except the table */
+            body {
+                background: white !important;
+            }
+            
+            body * {
+                visibility: hidden;
+            }
+            
+            .table-section,
+            .table-section * {
+                visibility: visible;
+            }
+            
+            .table-section {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white !important;
+                box-shadow: none !important;
+                padding: 20px !important;
+            }
+            
+            /* Add print header */
+            .table-section::before {
+                content: "Sri Balathandayuthapani Temple - Donations Report";
+                display: block;
+                text-align: center;
+                font-size: 20px;
+                font-weight: bold;
+                color: #764ba2;
+                margin-bottom: 10px;
+                padding-bottom: 10px;
+                border-bottom: 2px solid #764ba2;
+            }
+            
+            /* Hide buttons and export section */
+            .export-section,
+            .action-buttons,
+            .btn {
+                display: none !important;
+            }
+            
+            /* Keep table title centered */
+            .table-section h3 {
+                text-align: center;
+                margin-bottom: 20px;
+            }
+            
+            /* Adjust table for printing */
+            table {
+                width: 100%;
+                page-break-inside: auto;
+                min-width: auto;
+            }
+            
+            table tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+            
+            table th {
+                background-color: #f8f9fa !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            /* Keep badge colors in print */
+            .status-badge,
+            .type-badge {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .amount {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            /* Remove hover effects */
+            table tr:hover {
+                background: none !important;
+            }
+            
+            /* Hide the "Actions" column header and cells */
+            table th:last-child,
+            table td:last-child {
+                display: none;
+            }
+        }
+
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
@@ -780,5 +876,4 @@ if ($stats_row = $stats_result->fetch_assoc()) {
 if ($conn) {
     $conn->close();
 }
-
 ?>
